@@ -4,7 +4,7 @@ import { AuthError, findUserById, verifyAccessToken } from "../modules/auth/auth
 export async function authenticate(req:Request, res: Response, next: NextFunction): Promise<void> {
     const authorization = req.headers.authorization;
 
-    if(!authorization?.startsWith("Bearer")) {
+    if(!authorization?.startsWith("Bearer ")) {
         res.status(401).json({
             message: "Authentication required",
         });
