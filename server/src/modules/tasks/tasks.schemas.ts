@@ -35,3 +35,18 @@ export const updateTaskSchema = z
   });
 
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+
+
+export const reorderTasksSchema = z
+  .object({
+    taskIds: z
+      .array(z.string().regex(UUID_REGEX, "Invalid task ID"))
+      .min(1, "At least one task ID is required")
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        "Duplicate task IDs are not allowed",
+      ),
+  })
+  .strict();
+
+export type ReorderTasksInput = z.infer<typeof reorderTasksSchema>;

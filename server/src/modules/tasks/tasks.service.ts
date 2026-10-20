@@ -470,3 +470,148 @@ export async function deleteProjectTask(
     client.release();
   }
 }
+
+
+export class TaskReorderValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TaskReorderValidationError";
+  }
+}
+
+export async function reorderProjectTasks(
+  projectId: string,
+  userId: string,
+  role: UserRole,
+  taskIds: string[],
+) {
+  const client = await pool.connect();
+  let inTransaction = false;
+
+  try {
+    await client.query("BEGIN");
+    inTransaction = true;
+
+    // Lock the project to coordinate concurrent task creation
+    // and reordering operations that use the same lock.
+    const projectResult = await client.query(
+      `SELECT id
+       FROM projects
+       WHERE id = $1
+       FOR UPDATE`,
+      [projectId],
+    );
+
+    if (projectResult.rowCount === 0) {
+      throw new TaskProjectNotFoundError();
+    }
+
+    // Admins can reorder tasks in any project.
+    // Other users must be project members.
+    if (role !== "admin") {
+      const membershipResult = await client.query(
+        `SELECT 1
+         FROM project_members
+         WHERE project_id = $1
+           AND user_id = $2`,
+        [projectId, userId],
+      );
+
+      if (membershipResult.rowCount === 0) {
+        throw new TaskProjectForbiddenError();
+      }
+    }
+
+    // Lock the project's tasks and retrieve their current IDs.
+    const existingTasksResult = await client.query(
+      `SELECT id
+       FROM tasks
+       WHERE project_id = $1
+       ORDER BY position ASC, id ASC
+       FOR UPDATE`,
+      [projectId],
+    );
+
+    const existingTaskIds = existingTasksResult.rows.map(
+      (task: { id: string }) => task.id,
+    );
+
+    // Reject a list that omits tasks or contains IDs that
+    // do not belong to this project.
+    if (
+      taskIds.length !== existingTaskIds.length ||
+      taskIds.some((id) => !existingTaskIds.includes(id))
+    ) {
+      throw new TaskReorderValidationError(
+        "taskIds must contain every task in this project exactly once",
+      );
+    }
+
+    // Assign consecutive positions according to array order.
+    // The position constraint is deferred until COMMIT, so
+    // swapping existing positions is safe within this transaction.
+    for (const [index, taskId] of taskIds.entries()) {
+      const result = await client.query(
+        `UPDATE tasks
+         SET position = $1,
+             updated_at = NOW()
+         WHERE id = $2
+           AND project_id = $3`,
+        [index + 1, taskId, projectId],
+      );
+
+      if (result.rowCount !== 1) {
+        throw new Error(
+          `Failed to update position for task ${taskId}`,
+        );
+      }
+    }
+
+    // Return the persisted order and the same basic task
+    // representation used by the GET endpoint.
+    const updatedTasksResult = await client.query(
+      `SELECT
+         t.id,
+         t.project_id AS "projectId",
+         t.title,
+         t.description,
+         t.status,
+         t.assigned_to AS "assignedTo",
+         t.position,
+         t.created_by AS "createdBy",
+         t.created_at AS "createdAt",
+         t.updated_at AS "updatedAt",
+         CASE
+           WHEN assignee.id IS NULL THEN NULL
+           ELSE json_build_object(
+             'id', assignee.id,
+             'name', assignee.name
+           )
+         END AS assignee
+       FROM tasks t
+       LEFT JOIN users assignee
+         ON assignee.id = t.assigned_to
+       WHERE t.project_id = $1
+       ORDER BY t.position ASC, t.id ASC`,
+      [projectId],
+    );
+
+    await client.query("COMMIT");
+    inTransaction = false;
+
+    return updatedTasksResult.rows;
+  } catch (error: unknown) {
+    if (inTransaction) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // Preserve the original error.
+      }
+    }
+
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
