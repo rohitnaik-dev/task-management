@@ -3,7 +3,8 @@ import express from "express";
 import cors from "cors";
 import { pool } from "./db/pool.js"
 import authRoutes from "./modules/auth/auth.routes.js";
-import usersRoutes from "./modules/users/users.routes.js"
+import usersRoutes from "./modules/users/users.routes.js";
+import projectsRoutes from "./modules/projects/projects.routes.js";
 const app = express();
 
 
@@ -17,6 +18,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/projects", projectsRoutes);
 
 
 app.get("/health", (_req, res) => {
