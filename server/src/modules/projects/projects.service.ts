@@ -141,7 +141,7 @@ export async function listProjectMembers(user: AuthUser, projectId: string) {
 
     const result = await pool.query(
         `SELECT u.id, u.name, u.email, u.role, pm.joined_at
-        FROM project_mambers pm
+        FROM project_members pm
         INNER JOIN users u ON u.id = pm.user_id
         WHERE pm.project_id = $1
         ORDER BY pm.joined_at ASC`,
