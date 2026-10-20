@@ -1,5 +1,6 @@
 import { pool} from "../../db/pool.js"
-import type { CreateProjectInput, UpdateProjectInput } from "./projects.schemas.js"
+import type { CreateProjectInput, UpdateProjectInput } from "./projects.schemas.js";
+import { revokeProjectMemberAccess, revokeProjectRoomAccess, disconnectUserSockets } from "../../socket/socket.instance.js";
 
 type AuthUser = {
     id: string,
@@ -98,7 +99,7 @@ export async function updateProject(projectId: string, input: UpdateProjectInput
         `UPDATE projects
         SET name = COALESCE($2, name),
             description = CASE
-            WHEN $3::boolean THIS $4::text
+            WHEN $3::boolean THEN $4::text
             ELSE description
         END
     WHERE id = $1
@@ -114,14 +115,21 @@ export async function updateProject(projectId: string, input: UpdateProjectInput
 }
 
 export async function deleteProject(projectId: string) {
-    const result  = await pool.query(
-        `DELETE FROM projects
-        WHERE id = $1
-        RETURNING id`,
-        [projectId]
-    );
+  const result = await pool.query(
+    `DELETE FROM projects
+     WHERE id = $1
+     RETURNING id`,
+    [projectId],
+  );
 
-    return result.rowCount !== null && result.rowCount > 0;
+  const deleted = result.rowCount !== null &&
+    result.rowCount > 0;
+
+  if (deleted) {
+    revokeProjectRoomAccess(projectId);
+  }
+
+  return deleted;
 }
 
 export async function listProjectMembers(user: AuthUser, projectId: string) {
@@ -187,13 +195,22 @@ export async function addProjectMember( projectId: string, userId: string) {
     return { status: "conflict" as const};
 }
 
-export async function removeProjectMember(projectId: string, userId: string) {
-    const result = await pool.query(
-        `DELETE FROM project_members
-        WHERE project_id = $1 AND user_id = $2
-        RETURNING project_id, user_id`,
-        [projectId, userId],
-    );
+export async function removeProjectMember(
+  projectId: string,
+  userId: string,
+) {
+  const result = await pool.query(
+    `DELETE FROM project_members
+     WHERE project_id = $1 AND user_id = $2
+     RETURNING project_id, user_id`,
+    [projectId, userId],
+  );
 
-    return result.rows[0] ?? null;
+  const removedMember = result.rows[0] ?? null;
+
+  if (removedMember) {
+    revokeProjectMemberAccess(projectId, userId);
+  }
+
+  return removedMember;
 }

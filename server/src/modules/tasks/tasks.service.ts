@@ -3,6 +3,7 @@ import { pool } from "../../db/pool.js";
 import type { UserRole } from "../auth/auth.service.js";
 import type { PoolClient } from "pg";
 import type { CreateTaskInput, UpdateTaskInput } from "./tasks.schemas.js";
+import { getSocketServer } from "../../socket/socket.instance.js";
 
 export class TaskProjectNotFoundError extends Error {
   constructor() {
@@ -24,6 +25,22 @@ export class TaskNotFoundError extends Error {
     this.name = "TaskNotFoundError";
   }
 }
+
+
+function emitProjectTaskEvent(
+  projectId: string,
+  event: string,
+  payload: unknown,
+): void {
+  try {
+    getSocketServer()
+      .to(`project:${projectId}`)
+      .emit(event, payload);
+  } catch (error) {
+    console.error("Failed to emit task event:", error);
+  }
+}
+
 
 export async function listProjectTasks(
   projectId: string,
@@ -226,6 +243,12 @@ export async function createProjectTask(
     await client.query("COMMIT");
     inTransaction = false;
 
+    emitProjectTaskEvent(
+  projectId,
+  "task:created",
+  taskResult.rows[0],
+);
+
     return taskResult.rows[0];
   } catch (error: unknown) {
     if (inTransaction) {
@@ -382,6 +405,12 @@ export async function updateProjectTask(
     await client.query("COMMIT");
     inTransaction = false;
 
+    emitProjectTaskEvent(
+  projectId,
+  "task:updated",
+  updatedTask,
+);
+
     return updatedTask;
   } catch (error: unknown) {
     if (inTransaction) {
@@ -456,6 +485,14 @@ export async function deleteProjectTask(
 
     await client.query("COMMIT");
     inTransaction = false;
+
+
+    emitProjectTaskEvent(
+  projectId,
+  "task:deleted",
+  { id: taskId, projectId },
+);
+
   } catch (error: unknown) {
     if (inTransaction) {
       try {
@@ -539,13 +576,14 @@ export async function reorderProjectTasks(
     // Reject a list that omits tasks or contains IDs that
     // do not belong to this project.
     if (
-      taskIds.length !== existingTaskIds.length ||
-      taskIds.some((id) => !existingTaskIds.includes(id))
-    ) {
-      throw new TaskReorderValidationError(
-        "taskIds must contain every task in this project exactly once",
-      );
-    }
+  taskIds.length !== existingTaskIds.length ||
+  new Set(taskIds).size !== taskIds.length ||
+  taskIds.some((id) => !existingTaskIds.includes(id))
+) {
+  throw new TaskReorderValidationError(
+    "taskIds must contain every task in this project exactly once",
+  );
+}
 
     // Assign consecutive positions according to array order.
     // The position constraint is deferred until COMMIT, so
@@ -598,6 +636,12 @@ export async function reorderProjectTasks(
 
     await client.query("COMMIT");
     inTransaction = false;
+
+    emitProjectTaskEvent(
+  projectId,
+  "tasks:reordered",
+  updatedTasksResult.rows,
+);
 
     return updatedTasksResult.rows;
   } catch (error: unknown) {
