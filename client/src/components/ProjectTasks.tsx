@@ -7,54 +7,51 @@ import {
   ClipboardList,
   AlertCircle,
 } from "lucide-react";
-import { api } from "../api/client";
+
+import {
+  getProjectMembers,
+  type ProjectMember,
+} from "../api/projectMembers.service";
+
+import {
+  getProjectTasks,
+  createProjectTask,
+  updateProjectTask,
+  deleteProjectTask,
+  type Task,
+  type TaskStatus,
+} from "../api/tasks.service";
 
 interface ProjectTasksProps {
   projectId: string;
 }
 
-type TaskStatus = "Pending" | "In Progress" | "Completed";
-
-interface ProjectTask {
-  id: string;
-  projectId: string;
-  title: string;
-  description: string | null;
-  status: TaskStatus;
-  assignedTo: string | null;
-  position: number;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  assignee: {
-    id: string;
-    name: string;
-  } | null;
-}
-
 export default function ProjectTasks({
   projectId,
 }: ProjectTasksProps) {
-  const [tasks, setTasks] = useState<ProjectTask[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [membersError, setMembersError] = useState("");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
+
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState("");
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null);
 
+  // Load project tasks.
   const loadTasks = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await api.get<{ tasks: ProjectTask[] }>(
-        `/projects/${encodeURIComponent(projectId)}/tasks`,
-      );
-
-      setTasks(response.data.tasks);
+      const data = await getProjectTasks(projectId);
+      setTasks(data);
     } catch {
       setError("Unable to load project tasks. Please try again.");
     } finally {
@@ -66,6 +63,37 @@ export default function ProjectTasks({
     void loadTasks();
   }, [loadTasks]);
 
+  // Load project members for the assignment dropdown.
+  useEffect(() => {
+    let active = true;
+
+    async function loadMembers() {
+      setMembersError("");
+      setMembers([]);
+
+      try {
+        const data = await getProjectMembers(projectId);
+
+        if (active) {
+          setMembers(data);
+        }
+      } catch {
+        if (active) {
+          setMembersError(
+            "Unable to load project members. Please try again.",
+          );
+        }
+      }
+    }
+
+    void loadMembers();
+
+    return () => {
+      active = false;
+    };
+  }, [projectId]);
+
+  // Create a task.
   async function handleCreateTask(
     event: React.FormEvent<HTMLFormElement>,
   ) {
@@ -82,22 +110,21 @@ export default function ProjectTasks({
     setActionError("");
 
     try {
-      const response = await api.post<{ task: ProjectTask }>(
-        `/projects/${encodeURIComponent(projectId)}/tasks`,
-        {
-          title: trimmedTitle,
-          description: description.trim() || undefined,
-        },
-      );
+      const task = await createProjectTask(projectId, {
+        title: trimmedTitle,
+        description: description.trim() || undefined,
+        assignedTo: assignedTo || undefined,
+      });
 
       setTasks((current) =>
-        [...current, response.data.task].sort(
+        [...current, task].sort(
           (a, b) => a.position - b.position,
         ),
       );
 
       setTitle("");
       setDescription("");
+      setAssignedTo("");
     } catch {
       setActionError(
         "Unable to create the task. Please try again.",
@@ -107,22 +134,24 @@ export default function ProjectTasks({
     }
   }
 
+  // Update a task's status.
   async function handleStatusChange(
-    task: ProjectTask,
+    task: Task,
     status: TaskStatus,
   ) {
     setBusyTaskId(task.id);
     setActionError("");
 
     try {
-      const response = await api.patch<{ task: ProjectTask }>(
-        `/projects/${encodeURIComponent(projectId)}/tasks/${encodeURIComponent(task.id)}`,
+      const updatedTask = await updateProjectTask(
+        projectId,
+        task.id,
         { status },
       );
 
       setTasks((current) =>
         current.map((item) =>
-          item.id === task.id ? response.data.task : item,
+          item.id === task.id ? updatedTask : item,
         ),
       );
     } catch {
@@ -134,7 +163,8 @@ export default function ProjectTasks({
     }
   }
 
-  async function handleDeleteTask(task: ProjectTask) {
+  // Delete a task.
+  async function handleDeleteTask(task: Task) {
     const confirmed = window.confirm(
       `Are you sure you want to delete "${task.title}"?`,
     );
@@ -145,9 +175,7 @@ export default function ProjectTasks({
     setActionError("");
 
     try {
-      await api.delete(
-        `/projects/${encodeURIComponent(projectId)}/tasks/${encodeURIComponent(task.id)}`,
-      );
+      await deleteProjectTask(projectId, task.id);
 
       setTasks((current) =>
         current.filter((item) => item.id !== task.id),
@@ -201,6 +229,7 @@ export default function ProjectTasks({
           Create a task
         </h3>
 
+        {/* Title */}
         <div>
           <label
             htmlFor="task-title"
@@ -221,6 +250,7 @@ export default function ProjectTasks({
           />
         </div>
 
+        {/* Description */}
         <div>
           <label
             htmlFor="task-description"
@@ -244,12 +274,71 @@ export default function ProjectTasks({
           />
         </div>
 
+        {/* Assignee */}
+        <div>
+          <label
+            htmlFor="task-assignee"
+            className="mb-1 block text-sm font-medium text-slate-700"
+          >
+            Assign to
+          </label>
+
+          <select
+            id="task-assignee"
+            value={assignedTo}
+            onChange={(event) =>
+              setAssignedTo(event.target.value)
+            }
+            disabled={!!membersError}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">Unassigned</option>
+
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+
+          {membersError && (
+            <div className="mt-2">
+              <p role="alert" className="text-sm text-red-600">
+                {membersError}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMembersError("");
+                  setMembers([]);
+                  setActionError("");
+                  // Member loading is retriggered by the effect
+                  // when projectId changes; reload explicitly below.
+                  void getProjectMembers(projectId)
+                    .then(setMembers)
+                    .catch(() =>
+                      setMembersError(
+                        "Unable to load project members. Please try again.",
+                      ),
+                    );
+                }}
+                className="mt-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+              >
+                Retry loading members
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Action Error */}
         {actionError && (
           <p role="alert" className="text-sm text-red-600">
             {actionError}
           </p>
         )}
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={creating || !title.trim()}
@@ -260,7 +349,7 @@ export default function ProjectTasks({
         </button>
       </form>
 
-      {/* Loading State */}
+      {/* Task List States */}
       {loading ? (
         <div
           role="status"
@@ -269,7 +358,6 @@ export default function ProjectTasks({
           Loading project tasks...
         </div>
       ) : error ? (
-        /* Error State */
         <div
           role="alert"
           className="rounded-xl border border-red-200 bg-white p-6"
@@ -288,7 +376,6 @@ export default function ProjectTasks({
           </button>
         </div>
       ) : tasks.length === 0 ? (
-        /* Empty State */
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
           <ClipboardList
             size={32}
@@ -304,7 +391,6 @@ export default function ProjectTasks({
           </p>
         </div>
       ) : (
-        /* Task List */
         <div className="space-y-3">
           {tasks.map((task) => (
             <article
@@ -324,21 +410,17 @@ export default function ProjectTasks({
                   )}
 
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span>
-                      Position: {task.position}
-                    </span>
+                    <span>Position: {task.position}</span>
 
-                    {task.assignee && (
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1">
-                        Assigned to {task.assignee.name}
-                      </span>
-                    )}
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                      {task.assignee
+                        ? `Assigned to ${task.assignee.name}`
+                        : "Unassigned"}
+                    </span>
 
                     <span>
                       Created{" "}
-                      {Number.isNaN(
-                        Date.parse(task.createdAt),
-                      )
+                      {Number.isNaN(Date.parse(task.createdAt))
                         ? "—"
                         : new Date(
                             task.createdAt,
