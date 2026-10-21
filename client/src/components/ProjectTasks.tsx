@@ -76,7 +76,7 @@ function SortableTaskCard({
     >
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div className="flex items-start gap-2.5 min-w-0 flex-1">
-          {/* Drag handle */}
+          
           <button
             ref={handleRef}
             type="button"
@@ -114,7 +114,7 @@ function SortableTaskCard({
           </div>
         </div>
 
-        {/* Action buttons */}
+        
         <div className="flex shrink-0 items-center gap-2 self-start pl-7 sm:pl-0">
           <button
             type="button"
@@ -140,7 +140,7 @@ function SortableTaskCard({
         </div>
       </div>
 
-      {/* Task Status */}
+      
       <div className="mt-4 border-t border-slate-100 pt-3 pl-7 sm:pl-7">
         <label
           htmlFor={`task-status-${task.id}`}
@@ -196,7 +196,7 @@ export default function ProjectTasks({
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null);
   const [isReordering, setIsReordering] = useState(false);
 
-  // Edit task modal state
+  
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -205,7 +205,7 @@ export default function ProjectTasks({
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
 
-  // Socket.IO real-time connection state
+ 
   const socketStatus = useSocketStatus();
   const isReorderingRef = useRef(isReordering);
 
@@ -213,7 +213,7 @@ export default function ProjectTasks({
     isReorderingRef.current = isReordering;
   }, [isReordering]);
 
-  // Load project tasks.
+
   const handleRefreshTasks = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -254,7 +254,7 @@ export default function ProjectTasks({
     };
   }, [projectId]);
 
-  // Real-time task synchronization via Socket.IO
+  
   useEffect(() => {
     const socket = connectSocket();
 
@@ -289,7 +289,7 @@ export default function ProjectTasks({
       if (newTask.projectId !== projectId) return;
 
       setTasks((current) => {
-        // Prevent duplicate insertion
+        
         if (current.some((t) => t.id === newTask.id)) {
           return current;
         }
@@ -364,7 +364,7 @@ export default function ProjectTasks({
         return;
       }
 
-      // Do not overwrite optimistic ordering while the current user is dragging/saving
+      
       if (isReorderingRef.current) return;
 
       setTasks(reorderedTasks);
@@ -388,7 +388,7 @@ export default function ProjectTasks({
     };
   }, [projectId, handleRefreshTasks]);
 
-  // Load project members for the assignment dropdown.
+  
   useEffect(() => {
     let active = true;
 
@@ -412,7 +412,7 @@ export default function ProjectTasks({
     };
   }, [projectId, membersVersion]);
 
-  // Create a task.
+  
   async function handleCreateTask(
     event: React.FormEvent<HTMLFormElement>,
   ) {
@@ -456,7 +456,7 @@ export default function ProjectTasks({
     }
   }
 
-  // Update a task's status.
+  
   async function handleStatusChange(
     task: Task,
     status: TaskStatus,
@@ -485,7 +485,7 @@ export default function ProjectTasks({
     }
   }
 
-  // Delete a task.
+  // Delete a task
   async function handleDeleteTask(task: Task) {
     const confirmed = window.confirm(
       `Are you sure you want to delete "${task.title}"?`,
@@ -617,7 +617,7 @@ export default function ProjectTasks({
 
   return (
     <section className="mt-8">
-      {/* Header */}
+    
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2.5">
@@ -625,7 +625,7 @@ export default function ProjectTasks({
               Project tasks
             </h2>
 
-            {/* Real-time Connection Indicator */}
+         
             {socketStatus === "connected" ? (
               <span
                 className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200"
@@ -685,7 +685,7 @@ export default function ProjectTasks({
         </button>
       </div>
 
-      {/* Create Task Form */}
+      
       <form
         onSubmit={handleCreateTask}
         className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-4 sm:p-5"
@@ -715,7 +715,7 @@ export default function ProjectTasks({
           />
         </div>
 
-        {/* Description */}
+      
         <div>
           <label
             htmlFor="task-description"
@@ -739,7 +739,7 @@ export default function ProjectTasks({
           />
         </div>
 
-        {/* Assignee */}
+        
         <div>
           <label
             htmlFor="task-assignee"
@@ -794,14 +794,14 @@ export default function ProjectTasks({
           )}
         </div>
 
-        {/* Action Error */}
+       
         {actionError && (
           <p role="alert" className="text-sm text-red-600">
             {actionError}
           </p>
         )}
 
-        {/* Submit */}
+      
         <button
           type="submit"
           disabled={creating || !title.trim()}
@@ -812,7 +812,7 @@ export default function ProjectTasks({
         </button>
       </form>
 
-      {/* Task List States */}
+      
       {loading ? (
         <div
           role="status"
@@ -872,7 +872,7 @@ export default function ProjectTasks({
         </DragDropProvider>
       )}
 
-      {/* Edit Task Modal */}
+      
       {editingTask && (
         <div
           role="dialog"

@@ -30,7 +30,7 @@ export default function ProjectMembers({
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
 
-  // Add Member Modal State
+ 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [workspaceUsers, setWorkspaceUsers] = useState<SafeUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -38,7 +38,7 @@ export default function ProjectMembers({
   const [submittingMember, setSubmittingMember] = useState(false);
   const [addMemberError, setAddMemberError] = useState("");
 
-  // Remove member loading tracking
+ 
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
 
   const handleRefresh = useCallback(async () => {
@@ -92,7 +92,7 @@ export default function ProjectMembers({
     try {
       const users = await getUsers();
       setWorkspaceUsers(users);
-      // Select first available user who is not already a member
+      
       const available = users.filter((u) => !members.some((m) => m.id === u.id));
       if (available.length > 0) {
         setSelectedUserId(available[0].id);
@@ -319,7 +319,7 @@ export default function ProjectMembers({
         </div>
       )}
 
-      {/* Add Member Modal */}
+
       {isAddOpen && (
         <div
           role="dialog"

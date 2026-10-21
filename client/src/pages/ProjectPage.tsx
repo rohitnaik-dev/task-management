@@ -24,14 +24,14 @@ export default function ProjectPage() {
   const [error, setError] = useState("");
   const [membersVersion, setMembersVersion] = useState(0);
 
-  // Edit project state
+  
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState("");
 
-  // Delete project state
+
   const [deleting, setDeleting] = useState(false);
   const [actionError, setActionError] = useState("");
 
@@ -247,19 +247,19 @@ export default function ProjectPage() {
         )}
       </div>
 
-      {/* Project members */}
+      
       <ProjectMembers
         projectId={project.id}
         onMembersChange={() => setMembersVersion((v) => v + 1)}
       />
 
-      {/* Project tasks */}
+      
       <ProjectTasks
         projectId={project.id}
         membersVersion={membersVersion}
       />
 
-      {/* Edit Project Modal */}
+      
       {isEditOpen && (
         <div
           role="dialog"

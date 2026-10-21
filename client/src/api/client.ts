@@ -21,7 +21,7 @@ export const api = axios.create({
   },
 });
 
-// Attach the token to requests that require authentication.
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");
 
@@ -32,7 +32,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Clear invalid/expired session and redirect to login on 401
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Manage socket connection lifecycle with authentication state
+  
   useEffect(() => {
     if (user) {
       connectSocket();

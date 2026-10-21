@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Create project modal state
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
@@ -259,7 +259,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Create Project Modal */}
+      
       {isModalOpen && (
         <div
           role="dialog"

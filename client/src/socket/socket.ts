@@ -43,7 +43,7 @@ export function connectSocket(): Socket {
     return socket;
   }
 
-  // Update authentication payload with latest token
+  
   socket.auth = { token };
 
   if (!socket.connected) {
