@@ -24,10 +24,12 @@ import {
 
 interface ProjectTasksProps {
   projectId: string;
+  membersVersion?: number;
 }
 
 export default function ProjectTasks({
   projectId,
+  membersVersion = 0,
 }: ProjectTasksProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<ProjectMember[]>([]);
@@ -107,7 +109,7 @@ export default function ProjectTasks({
     return () => {
       active = false;
     };
-  }, [projectId]);
+  }, [projectId, membersVersion]);
 
   // Create a task.
   async function handleCreateTask(

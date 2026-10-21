@@ -1,4 +1,3 @@
-
 import { api } from "./client";
 
 export interface ProjectMember {
@@ -13,6 +12,10 @@ interface ProjectMembersResponse {
   members: ProjectMember[];
 }
 
+interface ProjectMemberResponse {
+  member: ProjectMember;
+}
+
 export async function getProjectMembers(
   projectId: string,
 ): Promise<ProjectMember[]> {
@@ -21,4 +24,25 @@ export async function getProjectMembers(
   );
 
   return response.data.members;
+}
+
+export async function addProjectMember(
+  projectId: string,
+  userId: string,
+): Promise<ProjectMember> {
+  const response = await api.post<ProjectMemberResponse>(
+    `/projects/${encodeURIComponent(projectId)}/members`,
+    { userId },
+  );
+
+  return response.data.member;
+}
+
+export async function removeProjectMember(
+  projectId: string,
+  userId: string,
+): Promise<void> {
+  await api.delete(
+    `/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(userId)}`,
+  );
 }
