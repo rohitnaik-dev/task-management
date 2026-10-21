@@ -33,6 +33,21 @@ app.get("/health", (_req, res) => {
     });
 });
 
+app.use((_req, res) => {
+    res.status(404).json({
+        message: "Route not found",
+    });
+});
+
+// Global error handler to ensure JSON responses and prevent unhandled crashes
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("Unhandled error:", err);
+    const status = typeof err.status === "number" ? err.status : typeof err.statusCode === "number" ? err.statusCode : 500;
+    res.status(status).json({
+        message: err.message || "Internal server error",
+    });
+});
+
 const port = Number(process.env.PORT ?? 5000);
 
 
