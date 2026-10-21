@@ -4,6 +4,7 @@ import { api } from "./client";
 import type {
   AuthResponse,
   LoginCredentials,
+  RegisterCredentials,
   SafeUser,
 } from "../types/auth";
 
@@ -27,6 +28,29 @@ function getErrorMessage(error: unknown): string {
   }
 
   return "An unexpected error occurred.";
+}
+
+export async function register(
+  credentials: RegisterCredentials,
+): Promise<AuthResponse> {
+  try {
+    const response = await api.post<AuthResponse>(
+      "/auth/register",
+      credentials,
+    );
+
+    const { user, token } = response.data;
+
+    if (!user || !token) {
+      throw new Error("Invalid registration response from server.");
+    }
+
+    localStorage.setItem("auth_token", token);
+
+    return { user, token };
+  } catch (error) {
+    throw new Error(getErrorMessage(error), { cause: error });
+  }
 }
 
 export async function login(

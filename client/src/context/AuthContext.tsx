@@ -5,8 +5,9 @@ import {
   type ReactNode,
 } from "react";
 import * as authApi from "../api/auth";
-import type { LoginCredentials, SafeUser } from "../types/auth";
+import type { LoginCredentials, RegisterCredentials, SafeUser } from "../types/auth";
 import { AuthContext } from "./useAuth";
+import { connectSocket, disconnectSocket } from "../socket/socket";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SafeUser | null>(null);
@@ -39,18 +40,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Manage socket connection lifecycle with authentication state
+  useEffect(() => {
+    if (user) {
+      connectSocket();
+    } else {
+      disconnectSocket();
+    }
+  }, [user]);
+
   const login = useCallback(async (credentials: LoginCredentials) => {
     const result = await authApi.login(credentials);
     setUser(result.user);
+    connectSocket();
+  }, []);
+
+  const register = useCallback(async (credentials: RegisterCredentials) => {
+    const result = await authApi.register(credentials);
+    setUser(result.user);
+    connectSocket();
   }, []);
 
   const logout = useCallback(() => {
+    disconnectSocket();
     authApi.logout();
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

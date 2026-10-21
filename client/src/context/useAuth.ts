@@ -1,10 +1,11 @@
 import { createContext, useContext } from "react";
-import type { LoginCredentials, SafeUser } from "../types/auth";
+import type { LoginCredentials, RegisterCredentials, SafeUser } from "../types/auth";
 
 export interface AuthContextValue {
   user: SafeUser | null;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
 }
 

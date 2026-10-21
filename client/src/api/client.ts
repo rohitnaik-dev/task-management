@@ -1,5 +1,6 @@
 
 import axios from "axios";
+import { disconnectSocket } from "../socket/socket";
 
 const configuredUrl = import.meta.env.VITE_API_URL;
 
@@ -40,6 +41,7 @@ api.interceptors.response.use(
       const isLoginRequest = requestUrl.includes("/auth/login");
 
       if (!isLoginRequest) {
+        disconnectSocket();
         localStorage.removeItem("auth_token");
 
         if (window.location.pathname !== "/login") {
