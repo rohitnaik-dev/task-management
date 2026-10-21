@@ -153,14 +153,19 @@ export async function listProjectMembers(user: AuthUser, projectId: string) {
 
 export async function addProjectMember( projectId: string, userId: string) {
     const result = await pool.query(
-  `INSERT INTO project_members (project_id, user_id)
-   SELECT p.id, usr.id
-   FROM projects p
-   CROSS JOIN users usr
-   WHERE p.id = $1
-     AND usr.id = $2
-   ON CONFLICT (project_id, user_id) DO NOTHING
-   RETURNING project_id, user_id, joined_at`,
+  `WITH inserted AS (
+     INSERT INTO project_members (project_id, user_id)
+     SELECT p.id, usr.id
+     FROM projects p
+     CROSS JOIN users usr
+     WHERE p.id = $1
+       AND usr.id = $2
+     ON CONFLICT (project_id, user_id) DO NOTHING
+     RETURNING project_id, user_id, joined_at
+   )
+   SELECT u.id, u.name, u.email, u.role, ins.joined_at
+   FROM inserted ins
+   INNER JOIN users u ON u.id = ins.user_id`,
   [projectId, userId],
 );
 

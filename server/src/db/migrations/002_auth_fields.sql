@@ -1,5 +1,3 @@
-BEGIN;
-
 -- 1.add password hash
 -- initiall nullable so existing users do not break the migration.
 
@@ -29,6 +27,4 @@ CREATE TRIGGER users_normalize_email_trigger
 BEFORE INSERT OR UPDATE OF email ON users 
 FOR EACH ROW
 EXECUTE FUNCTION normalize_user_email();
-
-COMMIT;
 

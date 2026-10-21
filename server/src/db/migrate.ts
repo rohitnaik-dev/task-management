@@ -16,6 +16,13 @@ const files = (await readdir(migrationsDir))
 const client = await pool.connect();
 
 try {
+    await client.query(`
+        CREATE TABLE IF NOT EXISTS public.schema_migrations (
+            version TEXT PRIMARY KEY,
+            applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+    `);
+
     for(const file of files) {
         await client.query("BEGIN");
 

@@ -25,13 +25,13 @@ export const loginSchema = z.object({
         .string()
         .trim()
         .email("Enter a valid email address")
-        .max(257, "Email is too long"),
+        .max(254, "Email is too long"),
 
 
     password: z
         .string()
         .min(1, "Password is required")
-        .max(72, "Email is too long"),
+        .max(72, "Password must be at most 72 characters"),
 
 });
 
