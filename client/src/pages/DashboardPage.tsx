@@ -12,6 +12,7 @@ import {
   createProject,
   type Project,
 } from "../api/projects.service";
+import { formatDate } from "../utils/date";
 import axios from "axios";
 
 export default function DashboardPage() {
@@ -250,10 +251,7 @@ export default function DashboardPage() {
                 </p>
 
                 <p className="mt-4 text-xs text-slate-400">
-                  Created{" "}
-                  {Number.isNaN(Date.parse(project.created_at))
-                    ? "date unavailable"
-                    : new Date(project.created_at).toLocaleDateString()}
+                  Created {formatDate(project.created_at)}
                 </p>
               </Link>
             ))}

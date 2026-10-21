@@ -10,6 +10,7 @@ import ProjectMembers from "../components/ProjectMembers";
 import ProjectTasks from "../components/ProjectTasks";
 import { useAuth } from "../context/useAuth";
 import { Pencil, Trash2, X } from "lucide-react";
+import { formatDate } from "../utils/date";
 import axios from "axios";
 
 export default function ProjectPage() {
@@ -212,7 +213,9 @@ export default function ProjectPage() {
 
       <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm text-slate-500">Project</p>
+          <p className="text-sm text-slate-500">
+            Project • Created {formatDate(project.created_at)}
+          </p>
           <h1 className="mt-1 text-2xl font-bold text-slate-900">
             {project.name}
           </h1>

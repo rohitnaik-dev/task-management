@@ -8,6 +8,7 @@ import {
 } from "../api/projectMembers.service";
 import { getUsers } from "../api/users.service";
 import { useAuth } from "../context/useAuth";
+import { formatDate } from "../utils/date";
 import type { SafeUser } from "../types/auth";
 import axios from "axios";
 
@@ -295,9 +296,7 @@ export default function ProjectMembers({
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-5 py-4 text-slate-500">
-                    {Number.isNaN(Date.parse(member.joined_at))
-                      ? "—"
-                      : new Date(member.joined_at).toLocaleDateString()}
+                    {formatDate(member.joined_at)}
                   </td>
                   {isAdmin && (
                     <td className="whitespace-nowrap px-5 py-4 text-right">

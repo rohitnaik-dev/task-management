@@ -36,6 +36,7 @@ import {
 } from "../api/tasks.service";
 
 import { connectSocket, useSocketStatus } from "../socket/socket";
+import { formatDate } from "../utils/date";
 
 interface SortableTaskCardProps {
   task: Task;
@@ -108,12 +109,7 @@ function SortableTaskCard({
                   : "Unassigned"}
               </span>
 
-              <span>
-                Created{" "}
-                {Number.isNaN(Date.parse(task.createdAt))
-                  ? "—"
-                  : new Date(task.createdAt).toLocaleDateString()}
-              </span>
+              <span>Created {formatDate(task.createdAt)}</span>
             </div>
           </div>
         </div>
