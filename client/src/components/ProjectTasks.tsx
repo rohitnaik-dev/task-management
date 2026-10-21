@@ -45,7 +45,7 @@ export default function ProjectTasks({
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null);
 
   // Load project tasks.
-  const loadTasks = useCallback(async () => {
+  const handleRefreshTasks = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -60,33 +60,49 @@ export default function ProjectTasks({
   }, [projectId]);
 
   useEffect(() => {
-    void loadTasks();
-  }, [loadTasks]);
+    let ignore = false;
+
+    getProjectTasks(projectId)
+      .then((data) => {
+        if (!ignore) {
+          setTasks(data);
+          setError("");
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setError("Unable to load project tasks. Please try again.");
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [projectId]);
 
   // Load project members for the assignment dropdown.
   useEffect(() => {
     let active = true;
 
-    async function loadMembers() {
-      setMembersError("");
-      setMembers([]);
-
-      try {
-        const data = await getProjectMembers(projectId);
-
+    getProjectMembers(projectId)
+      .then((data) => {
         if (active) {
           setMembers(data);
+          setMembersError("");
         }
-      } catch {
+      })
+      .catch(() => {
         if (active) {
           setMembersError(
             "Unable to load project members. Please try again.",
           );
         }
-      }
-    }
-
-    void loadMembers();
+      });
 
     return () => {
       active = false;
@@ -208,7 +224,7 @@ export default function ProjectTasks({
 
         <button
           type="button"
-          onClick={() => void loadTasks()}
+          onClick={() => void handleRefreshTasks()}
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -369,7 +385,7 @@ export default function ProjectTasks({
 
           <button
             type="button"
-            onClick={() => void loadTasks()}
+            onClick={() => void handleRefreshTasks()}
             className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
             Try again

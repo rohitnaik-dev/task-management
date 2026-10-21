@@ -52,7 +52,7 @@ export async function login(
 
     return { user, token };
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw new Error(getErrorMessage(error), { cause: error });
   }
 }
 
@@ -80,7 +80,7 @@ export async function getCurrentUser(): Promise<SafeUser> {
       throw error;
     }
 
-    throw new Error(getErrorMessage(error));
+    throw new Error(getErrorMessage(error), { cause: error });
   }
 }
 

@@ -30,3 +30,25 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+// Clear invalid/expired session and redirect to login on 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      const requestUrl = error.config?.url ?? "";
+      const isLoginRequest = requestUrl.includes("/auth/login");
+
+      if (!isLoginRequest) {
+        localStorage.removeItem("auth_token");
+
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+

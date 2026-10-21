@@ -16,7 +16,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadProjects = useCallback(async () => {
+  const handleRefresh = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -31,8 +31,30 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    void loadProjects();
-  }, [loadProjects]);
+    let ignore = false;
+
+    getProjects()
+      .then((data) => {
+        if (!ignore) {
+          setProjects(data);
+          setError("");
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setError("Unable to load projects. Please try again.");
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return (
     <section>
@@ -55,7 +77,7 @@ export default function DashboardPage() {
           {!loading && (
             <button
               type="button"
-              onClick={() => void loadProjects()}
+              onClick={() => void handleRefresh()}
               disabled={loading}
               className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-50"
             >
@@ -87,7 +109,7 @@ export default function DashboardPage() {
 
             <button
               type="button"
-              onClick={() => void loadProjects()}
+              onClick={() => void handleRefresh()}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
               <RefreshCw size={16} />
