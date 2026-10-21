@@ -44,9 +44,9 @@ export default function Sidebar({
             <LayoutDashboard size={18} /> Dashboard
           </NavLink>
 
-          <NavLink to="/projects/demo" className={linkClass} onClick={onClose}>
-            <FolderKanban size={18} /> Projects
-          </NavLink>
+          <NavLink to="/dashboard" className={linkClass} onClick={onClose}>
+  <FolderKanban size={18} /> Projects
+</NavLink>
 
           {user?.role === "admin" && (
             <NavLink to="/admin/users" className={linkClass} onClick={onClose}>
