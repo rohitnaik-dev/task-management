@@ -48,7 +48,7 @@ export async function listProjectTasks(
   role: UserRole,
 ) {
 
-  // First check that the project exists
+  
   const projectResult = await pool.query(
     `SELECT id
      FROM projects
@@ -60,7 +60,7 @@ export async function listProjectTasks(
     throw new TaskProjectNotFoundError();
   }
 
-  // Admins may access tasks across all projects
+
   if (role !== "admin") {
     const membershipResult = await pool.query(
       `SELECT 1
@@ -75,7 +75,7 @@ export async function listProjectTasks(
     }
   }
 
-  // Return tasks in their persisted project order
+  
   const tasksResult = await pool.query(
     `SELECT
        t.id,
@@ -128,8 +128,7 @@ export async function createProjectTask(
     await client.query("BEGIN");
     inTransaction = true;
 
-    // Lock the project row so task creation is serialized
-    // for this project.
+  
     const projectResult = await client.query(
       `SELECT id
        FROM projects
@@ -142,7 +141,7 @@ export async function createProjectTask(
       throw new TaskProjectNotFoundError();
     }
 
-    // Admins can create tasks in any existing project.
+    
     if (role !== "admin") {
       const membershipResult = await client.query(
         `SELECT 1
@@ -157,8 +156,6 @@ export async function createProjectTask(
       }
     }
 
-    // If an assignee was provided, ensure they belong
-    // to this project.
     if (input.assignedTo !== undefined) {
       const assigneeResult = await client.query(
         `SELECT 1
@@ -173,8 +170,7 @@ export async function createProjectTask(
       }
     }
 
-    // The project lock prevents competing calls using
-    // this same locking strategy from choosing the same position.
+
     const positionResult = await client.query(
       `SELECT COALESCE(MAX(position), 0) + 1 AS position
        FROM tasks
@@ -184,7 +180,7 @@ export async function createProjectTask(
 
     const position = positionResult.rows[0].position;
 
-    // Insert the task and return the same shape as the GET endpoint.
+  
     const taskResult = await client.query(
       `WITH inserted_task AS (
          INSERT INTO tasks (
@@ -281,7 +277,7 @@ export async function updateProjectTask(
     await client.query("BEGIN");
     inTransaction = true;
 
-    // Verify that the project exists.
+    
     const projectResult = await client.query(
       `SELECT id
        FROM projects
@@ -293,8 +289,7 @@ export async function updateProjectTask(
       throw new TaskProjectNotFoundError();
     }
 
-    // Admins may update tasks in any project.
-    // Regular users must be project members.
+    
     if (role !== "admin") {
       const membershipResult = await client.query(
         `SELECT 1
@@ -309,8 +304,7 @@ export async function updateProjectTask(
       }
     }
 
-    // Lock the task to prevent concurrent updates from
-    // overwriting one another while this transaction runs.
+    
     const existingTaskResult = await client.query(
       `SELECT id
        FROM tasks
@@ -324,8 +318,7 @@ export async function updateProjectTask(
       throw new TaskNotFoundError();
     }
 
-    // Validate a newly supplied assignee.
-    // Null explicitly clears the assignment.
+
     if (
       input.assignedTo !== undefined &&
       input.assignedTo !== null
@@ -343,8 +336,7 @@ export async function updateProjectTask(
       }
     }
 
-    // Build the SET clause exclusively from validated,
-    // explicitly supplied fields. Values remain parameterized.
+    
     const columnMap = {
       title: "title",
       description: "description",
@@ -417,7 +409,7 @@ export async function updateProjectTask(
       try {
         await client.query("ROLLBACK");
       } catch {
-        // Preserve the original error.
+       
       }
     }
 
@@ -442,7 +434,7 @@ export async function deleteProjectTask(
     await client.query("BEGIN");
     inTransaction = true;
 
-    // 1. Verify that the project exists.
+    
     const projectResult = await client.query(
       `SELECT id
        FROM projects
@@ -454,8 +446,7 @@ export async function deleteProjectTask(
       throw new TaskProjectNotFoundError();
     }
 
-    // 2. Admins can delete tasks in any project.
-    // Regular users must be project members.
+    
     if (role !== "admin") {
       const membershipResult = await client.query(
         `SELECT 1
@@ -470,7 +461,7 @@ export async function deleteProjectTask(
       }
     }
 
-    // 3. Delete only if the task belongs to this project.
+   
     const deleteResult = await client.query(
       `DELETE FROM tasks
        WHERE id = $1
@@ -529,8 +520,7 @@ export async function reorderProjectTasks(
     await client.query("BEGIN");
     inTransaction = true;
 
-    // Lock the project to coordinate concurrent task creation
-    // and reordering operations that use the same lock.
+    
     const projectResult = await client.query(
       `SELECT id
        FROM projects
@@ -543,8 +533,7 @@ export async function reorderProjectTasks(
       throw new TaskProjectNotFoundError();
     }
 
-    // Admins can reorder tasks in any project.
-    // Other users must be project members.
+    
     if (role !== "admin") {
       const membershipResult = await client.query(
         `SELECT 1
@@ -559,7 +548,7 @@ export async function reorderProjectTasks(
       }
     }
 
-    // Lock the project's tasks and retrieve their current IDs.
+  
     const existingTasksResult = await client.query(
       `SELECT id
        FROM tasks
@@ -585,9 +574,7 @@ export async function reorderProjectTasks(
   );
 }
 
-    // Assign consecutive positions according to array order.
-    // The position constraint is deferred until COMMIT, so
-    // swapping existing positions is safe within this transaction.
+   
     for (const [index, taskId] of taskIds.entries()) {
       const result = await client.query(
         `UPDATE tasks
@@ -605,8 +592,7 @@ export async function reorderProjectTasks(
       }
     }
 
-    // Return the persisted order and the same basic task
-    // representation used by the GET endpoint.
+    
     const updatedTasksResult = await client.query(
       `SELECT
          t.id,
@@ -649,7 +635,7 @@ export async function reorderProjectTasks(
       try {
         await client.query("ROLLBACK");
       } catch {
-        // Preserve the original error.
+        
       }
     }
 
