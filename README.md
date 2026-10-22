@@ -2,8 +2,6 @@
 
 A full-stack collaborative task management application built using React, TypeScript, Node.js, Express, PostgreSQL, and Socket.IO. It enables users to create and manage multi-member projects, track task lifecycles, assign tasks, reorder them via drag-and-drop, and receive real-time updates across multiple sessions.
 
----
-
 <!-- Deployed Application & Demo Credentials -->
 
 - Hosted Frontend: [https://task-management-client-j89g.onrender.com]
@@ -19,26 +17,7 @@ You can also register a new account on the login page; new accounts automaticall
 
 ---
 
-<!-- Development Scope -->
 
-In accordance with the assessment instructions, development was divided as follows:
-
-
-- Relational database schema and migration design for projects and tasks
-- Task CRUD API endpoints and service layer
-- Task assignment and project membership validation logic
-- Task status lifecycle (Pending,In Progress, Completed)
-- Dense task ordering and database transaction reordering logic
-- Main task board and project UI in React
-- Drag-and-drop task reordering with optimistic updates and rollback
-- Socket.IO real-time event broadcasting and multi-user room subscription
-
-- User authentication (registration, login, JWT issuance, password hashing with bcrypt)
-- User management API (listing users, role switching)
-- Role-based access control (RBAC) middleware (authenticate, requireAdmin, self-demotion protection)
-- Client-side Axios interceptors for 401 handling
-
----
 
 <!-- Tech Stack -->
 
