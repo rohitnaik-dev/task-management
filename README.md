@@ -9,9 +9,9 @@ A full-stack collaborative task management application built using React, TypeSc
 - Health Check: [https://task-management-rf1t.onrender.com/health]
 
 <!-- Demo Admin Account -->
-- Email: `test@example.com`
-- Password: `StrongPassword123`
-- Role: `admin`
+- Email: test@example.com
+- Password: StrongPassword123
+- Role: admin
 
 You can also register a new account on the login page; new accounts automatically receive the default `user` role
 
